@@ -99,9 +99,13 @@ export default function Home() {
     return filtered;
   }, [activeCategory, searchQuery]);
 
-  // Load Supabase session on mount
+  // Load Supabase session on mount if configured
   useEffect(() => {
     const supabase = createClient();
+    if (!supabase) {
+      return;
+    }
+
     supabase.auth.getUser().then(({ data }) => {
       setUser(data?.user ?? null);
     });
@@ -113,6 +117,10 @@ export default function Home() {
 
   const handleSignOut = async () => {
     const supabase = createClient();
+    if (!supabase) {
+      setUser(null);
+      return;
+    }
     await supabase.auth.signOut();
     setUser(null);
   };
@@ -191,6 +199,11 @@ export default function Home() {
 
   return (
     <>
+      {/* Runtime status banner */}
+      <div style={{ backgroundColor: "#111", color: "#f8f8f8", textAlign: "center", padding: "14px 24px", fontSize: "0.95rem", lineHeight: 1.6 }}>
+        Site functionality is temporarily limited: authentication and checkout are disabled until configuration is complete. Browse the collection, and contact us at <strong>prjtrvpvault@gmail.com</strong> for help.
+      </div>
+
       {/* Sticky Monochromatic Header */}
       <header>
         <div className="container header-container" style={{ alignItems: "center" }}>
