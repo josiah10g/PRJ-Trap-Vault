@@ -78,6 +78,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedSize, setSelectedSize] = useState("M");
   const [user, setUser] = useState(null);
@@ -98,6 +99,13 @@ export default function Home() {
     }
     return filtered;
   }, [activeCategory, searchQuery]);
+
+  // Lock body scroll when overlays are open
+  useEffect(() => {
+    const isLocked = isMenuOpen || isCartOpen || Boolean(selectedProduct);
+    document.body.classList.toggle("scroll-locked", isLocked);
+    return () => document.body.classList.remove("scroll-locked");
+  }, [isMenuOpen, isCartOpen, selectedProduct]);
 
   // Load Supabase session on mount if configured
   useEffect(() => {
@@ -200,48 +208,58 @@ export default function Home() {
   return (
     <>
       {/* Runtime status banner */}
-      <div style={{ backgroundColor: "#111", color: "#f8f8f8", textAlign: "center", padding: "14px 24px", fontSize: "0.95rem", lineHeight: 1.6 }}>
+      <div className="status-banner">
         Site functionality is temporarily limited: authentication and checkout are disabled until configuration is complete. Browse the collection, and contact us at <strong>prjtrvpvault@gmail.com</strong> for help.
       </div>
 
       {/* Sticky Monochromatic Header */}
-      <header>
-        <div className="container header-container" style={{ alignItems: "center" }}>
-          <a href="#" className="logo" style={{ display: "flex", alignItems: "center" }}>
+      <header className={isMenuOpen ? "menu-open" : ""}>
+        <div className="container header-container">
+          <a href="#" className="logo">
             <Image
               src="/prj-logo.jpg"
               alt="PRJ Trap Vault logo"
               width={48}
               height={48}
-              style={{ objectFit: "contain" }}
+              className="logo-image"
+              priority
             />
           </a>
 
-          <nav>
+          <button
+            className="mobile-nav-toggle"
+            type="button"
+            aria-label={isMenuOpen ? "Close navigation" : "Open navigation"}
+            onClick={() => setIsMenuOpen((prev) => !prev)}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+
+          <nav className={`mobile-nav ${isMenuOpen ? "open" : ""}`}>
             <ul>
-              <li><a href="#" className="active">Store</a></li>
-              <li><a href="#about">About</a></li>
-              <li><a href="#contact">Support</a></li>
+              <li><a href="#" className="active" onClick={() => setIsMenuOpen(false)}>Store</a></li>
+              <li><a href="#about" onClick={() => setIsMenuOpen(false)}>About</a></li>
+              <li><a href="#contact" onClick={() => setIsMenuOpen(false)}>Support</a></li>
             </ul>
           </nav>
 
           <div className="header-actions">
             {/* Live authentication button */}
             {user ? (
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <span className="font-sans" style={{ fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-secondary)", maxWidth: "140px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {user.email}
-                </span>
+              <div className="header-user">
+                <span className="header-user-email font-sans">{user.email}</span>
                 <button
                   onClick={handleSignOut}
-                  className="action-btn font-sans"
-                  style={{ fontSize: "0.82rem", textTransform: "uppercase", letterSpacing: "0.06em", cursor: "pointer", background: "none", border: "none", color: "inherit" }}
+                  className="action-btn header-sign-out font-sans"
+                  type="button"
                 >
                   Sign Out
                 </button>
               </div>
             ) : (
-              <a href="/auth/login" className="action-btn font-sans" style={{ fontSize: "0.85rem", textTransform: "uppercase", textDecoration: "none", color: "inherit" }}>
+              <a href="/auth/login" className="action-btn header-sign-in font-sans">
                 Sign In
               </a>
             )}
@@ -249,7 +267,10 @@ export default function Home() {
             {/* Cart Trigger */}
             <button
               className="action-btn"
-              onClick={() => setIsCartOpen(true)}
+              onClick={() => {
+                setIsMenuOpen(false);
+                setIsCartOpen(true);
+              }}
               aria-label="Open Shopping Cart"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -324,7 +345,7 @@ export default function Home() {
       {/* Product List Grid */}
       <main className="container">
         {products.length === 0 ? (
-          <div style={{ padding: "80px 0", textAlignment: "center", color: "var(--text-secondary)", fontFamily: "var(--font-sans-family)", textTransform: "uppercase" }}>
+          <div style={{ padding: "80px 0", textAlign: "center", color: "var(--text-secondary)", fontFamily: "var(--font-sans-family)", textTransform: "uppercase" }}>
             No items matching your search.
           </div>
         ) : (
@@ -491,58 +512,49 @@ export default function Home() {
       </div>
 
       {/* Mini About Section */}
-      <section id="about" style={{ padding: "80px 0", borderTop: "1px solid var(--border-color)", backgroundColor: "var(--bg-secondary)" }}>
-        <div className="container" style={{ maxWidth: "800px", textAlignment: "center", margin: "0 auto" }}>
-          <h2 style={{ fontSize: "2rem", marginBottom: "24px" }}>PRJ TRAP VAULT Brand Philosophy</h2>
-          <p style={{ color: "var(--text-secondary)", lineHeight: "1.8", fontSize: "1.05rem" }}>
+      <section id="about" className="content-section content-section--bordered">
+        <div className="container content-section-inner">
+          <h2 className="section-title">PRJ TRAP VAULT Brand Philosophy</h2>
+          <p className="section-body">
             Born from a desire to escape normal styling choices, PRJ TRAP VAULT focuses on clean monochromatic contrasts. We avoid high color saturations in favor of deep structural patterns and premium heavy garments. Each piece is engineered in limited quantities to guarantee absolute distinction.
           </p>
         </div>
       </section>
 
       {/* Contact Section */}
-      <section id="contact" style={{ padding: "80px 0", backgroundColor: "var(--bg-secondary)" }}>
-        <div className="container" style={{ maxWidth: "980px", margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: "32px" }}>
-            <span style={{ display: "inline-block", fontSize: "0.85rem", letterSpacing: "0.24em", textTransform: "uppercase", color: "var(--text-secondary)" }}>
-              Contact the Owners
-            </span>
-            <h2 style={{ fontSize: "2rem", marginTop: "16px" }}>Get in Touch</h2>
-            <p style={{ color: "var(--text-secondary)", lineHeight: "1.8", fontSize: "1rem", maxWidth: "680px", margin: "16px auto 0" }}>
+      <section id="contact" className="content-section">
+        <div className="container contact-section-inner">
+          <div className="section-header">
+            <span className="section-eyebrow">Contact the Owners</span>
+            <h2 className="section-title">Get in Touch</h2>
+            <p className="section-lead">
               For orders, custom requests, or quick support, reach out directly to the PRJ Trap Vault team via email or phone.
             </p>
           </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-              gap: "24px",
-              alignItems: "stretch",
-            }}
-          >
-            <div style={{ backgroundColor: "var(--bg-primary)", padding: "28px", borderRadius: "24px", boxShadow: "0 20px 60px rgba(0,0,0,0.08)", minHeight: "220px" }}>
-              <h3 style={{ marginBottom: "12px", fontSize: "1.1rem" }}>Email</h3>
-              <p style={{ margin: "0 0 18px", color: "var(--text-secondary)", lineHeight: "1.8" }}>
+          <div className="contact-grid">
+            <div className="contact-card">
+              <h3>Email</h3>
+              <p>
                 Send us your questions, order details, or custom drop inquiries.
               </p>
-              <a href="mailto:prjtrvpvault@gmail.com" style={{ color: "inherit", textDecoration: "underline", fontWeight: 600 }}>
+              <a href="mailto:prjtrvpvault@gmail.com" className="contact-link">
                 prjtrvpvault@gmail.com
               </a>
             </div>
 
-            <div style={{ backgroundColor: "var(--bg-primary)", padding: "28px", borderRadius: "24px", boxShadow: "0 20px 60px rgba(0,0,0,0.08)", minHeight: "220px" }}>
-              <h3 style={{ marginBottom: "12px", fontSize: "1.1rem" }}>Phone</h3>
-              <p style={{ margin: "0 0 18px", color: "var(--text-secondary)", lineHeight: "1.8" }}>
+            <div className="contact-card">
+              <h3>Phone</h3>
+              <p>
                 Prefer to chat? Call or text us for faster order support.
               </p>
-              <a href="tel:+2349012270747" style={{ color: "inherit", textDecoration: "underline", fontWeight: 600 }}>
+              <a href="tel:+2349012270747" className="contact-link">
                 09012270747
               </a>
             </div>
           </div>
 
-          <p style={{ marginTop: "28px", textAlign: "center", color: "var(--text-secondary)", fontSize: "0.95rem", lineHeight: "1.7" }}>
+          <p className="contact-footnote">
             We keep the shop responsive and mobile-friendly, so you can reach us from any device.
           </p>
         </div>
