@@ -293,15 +293,19 @@ export default function Home() {
         className="hero"
         style={{ backgroundImage: "url('/images/IMG-20260701-WA0039.jpg')" }}
       >
-        <div className="hero-overlay"></div>
-        <div className="container" style={{ position: "relative", zIndex: 10 }}>
+        <div className="hero-overlay" aria-hidden="true" />
+        <div className="container hero-inner">
           <div className="hero-content">
             <span className="hero-tag">Vault Release / 2026</span>
-            <h1 className="hero-title">Enter The Monochromatic Vault</h1>
+            <h1 className="hero-title">
+              <span className="hero-title-line">Enter The</span>
+              <span className="hero-title-line hero-title-line--wide">Monochromatic</span>
+              <span className="hero-title-line">Vault</span>
+            </h1>
             <p className="hero-subtitle">
               Heavyweight cottons. Custom industrial panels. Curated streetwear for the boldest style minds in Nigeria. Purely black & white.
             </p>
-            <a href="#catalog" className="btn btn-primary">Shop The Collection</a>
+            <a href="#catalog" className="btn btn-primary hero-cta">Shop The Collection</a>
           </div>
         </div>
       </section>
