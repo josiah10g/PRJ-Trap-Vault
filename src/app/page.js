@@ -81,6 +81,8 @@ export default function Home() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedSize, setSelectedSize] = useState("M");
   const [user, setUser] = useState(null);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutMsg, setCheckoutMsg] = useState("");
 
   // Load Supabase session on mount
   useEffect(() => {
@@ -181,10 +183,73 @@ export default function Home() {
     }).format(amount);
   };
 
-  // Simulate checkout logic
-  const handleCheckout = () => {
+  // Live Paystack checkout
+  const handleCheckout = async () => {
     if (cart.length === 0) return;
-    alert("Checkout functionality with Paystack will be activated in Phase 4!");
+
+    const paystackKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY;
+    if (!paystackKey) {
+      alert("Paystack is not configured yet. Add NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY to your environment variables.");
+      return;
+    }
+
+    const email = user?.email;
+    if (!email) {
+      window.location.href = "/auth/login";
+      return;
+    }
+
+    const total = getSubtotal(); // in Naira
+
+    setCheckoutLoading(true);
+    setCheckoutMsg("");
+
+    const handler = window.PaystackPop.setup({
+      key: paystackKey,
+      email,
+      amount: total * 100, // Paystack expects kobo
+      currency: "NGN",
+      ref: `PRG-${Date.now()}-${Math.floor(Math.random() * 1000000)}`,
+      metadata: {
+        custom_fields: [
+          { display_name: "Store", variable_name: "store", value: "PRG TRAP VAULT" },
+        ],
+      },
+      onClose: () => {
+        setCheckoutLoading(false);
+        setCheckoutMsg("Payment cancelled.");
+      },
+      callback: async (response) => {
+        // Server-side verification
+        try {
+          const res = await fetch("/api/verify-payment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              reference: response.reference,
+              cartItems: cart,
+              userEmail: email,
+            }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            saveCart([]);
+            setIsCartOpen(false);
+            setCheckoutMsg("");
+            setCheckoutLoading(false);
+            alert(`✅ Order confirmed! Payment of ${formatNaira(data.amount)} received. Check your email for details.`);
+          } else {
+            setCheckoutLoading(false);
+            setCheckoutMsg(`Payment error: ${data.error}`);
+          }
+        } catch {
+          setCheckoutLoading(false);
+          setCheckoutMsg("Could not verify payment. Please contact support.");
+        }
+      },
+    });
+
+    handler.openIframe();
   };
 
   return (
@@ -392,11 +457,29 @@ export default function Home() {
                 <span className="font-mono">{formatNaira(getSubtotal())}</span>
               </div>
             </div>
-            <button className="btn btn-primary checkout-btn" onClick={handleCheckout}>
-              Proceed to payment
+            {checkoutMsg && (
+              <p style={{ fontFamily: "var(--font-sans-family)", fontSize: "0.8rem", color: "#f87171", marginBottom: "8px", textAlign: "center" }}>
+                {checkoutMsg}
+              </p>
+            )}
+            <button
+              className="btn btn-primary checkout-btn"
+              onClick={handleCheckout}
+              disabled={checkoutLoading}
+              style={{ opacity: checkoutLoading ? 0.7 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}
+            >
+              {checkoutLoading ? (
+                <>
+                  <span className="auth-spinner" style={{ borderTopColor: "#000" }} />
+                  Processing…
+                </>
+              ) : (
+                "Proceed to Payment"
+              )}
             </button>
           </div>
         )}
+
       </div>
 
       {/* Product Detail Modal */}
