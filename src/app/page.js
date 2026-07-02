@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Image from "next/image";
+import { createClient } from "@/lib/supabase/client";
 
 // Pre-defined catalog mapped to reference images
 const PRODUCTS = [
@@ -80,7 +80,25 @@ export default function Home() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedSize, setSelectedSize] = useState("M");
-  const [user, setUser] = useState(null); // Mock user for Phase 1
+  const [user, setUser] = useState(null);
+
+  // Load Supabase session on mount
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data?.user ?? null);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => listener?.subscription?.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    setUser(null);
+  };
 
   // Load cart from localStorage
   useEffect(() => {
@@ -187,10 +205,25 @@ export default function Home() {
           </nav>
 
           <div className="header-actions">
-            {/* Mock authentication button */}
-            <a href="/auth/login" className="action-btn font-sans" style={{ fontSize: "0.85rem", textTransform: "uppercase", textDecoration: "none", color: "inherit" }}>
-              {user ? "Profile" : "Sign In"}
-            </a>
+            {/* Live authentication button */}
+            {user ? (
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <span className="font-sans" style={{ fontSize: "0.78rem", textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-secondary)", maxWidth: "140px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {user.email}
+                </span>
+                <button
+                  onClick={handleSignOut}
+                  className="action-btn font-sans"
+                  style={{ fontSize: "0.82rem", textTransform: "uppercase", letterSpacing: "0.06em", cursor: "pointer", background: "none", border: "none", color: "inherit" }}
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <a href="/auth/login" className="action-btn font-sans" style={{ fontSize: "0.85rem", textTransform: "uppercase", textDecoration: "none", color: "inherit" }}>
+                Sign In
+              </a>
+            )}
             
             {/* Cart Trigger */}
             <button 
