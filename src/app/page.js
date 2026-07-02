@@ -496,6 +496,54 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Contact Section */}
+      <section id="contact" style={{ padding: "80px 0", backgroundColor: "var(--bg-secondary)" }}>
+        <div className="container" style={{ maxWidth: "980px", margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: "32px" }}>
+            <span style={{ display: "inline-block", fontSize: "0.85rem", letterSpacing: "0.24em", textTransform: "uppercase", color: "var(--text-secondary)" }}>
+              Contact the Owners
+            </span>
+            <h2 style={{ fontSize: "2rem", marginTop: "16px" }}>Get in Touch</h2>
+            <p style={{ color: "var(--text-secondary)", lineHeight: "1.8", fontSize: "1rem", maxWidth: "680px", margin: "16px auto 0" }}>
+              For orders, custom requests, or quick support, reach out directly to the PRJ Trap Vault team via email or phone.
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+              gap: "24px",
+              alignItems: "stretch",
+            }}
+          >
+            <div style={{ backgroundColor: "var(--bg-primary)", padding: "28px", borderRadius: "24px", boxShadow: "0 20px 60px rgba(0,0,0,0.08)", minHeight: "220px" }}>
+              <h3 style={{ marginBottom: "12px", fontSize: "1.1rem" }}>Email</h3>
+              <p style={{ margin: "0 0 18px", color: "var(--text-secondary)", lineHeight: "1.8" }}>
+                Send us your questions, order details, or custom drop inquiries.
+              </p>
+              <a href="mailto:prjtrvpvault@gmail.com" style={{ color: "inherit", textDecoration: "underline", fontWeight: 600 }}>
+                prjtrvpvault@gmail.com
+              </a>
+            </div>
+
+            <div style={{ backgroundColor: "var(--bg-primary)", padding: "28px", borderRadius: "24px", boxShadow: "0 20px 60px rgba(0,0,0,0.08)", minHeight: "220px" }}>
+              <h3 style={{ marginBottom: "12px", fontSize: "1.1rem" }}>Phone</h3>
+              <p style={{ margin: "0 0 18px", color: "var(--text-secondary)", lineHeight: "1.8" }}>
+                Prefer to chat? Call or text us for faster order support.
+              </p>
+              <a href="tel:+2349012270747" style={{ color: "inherit", textDecoration: "underline", fontWeight: 600 }}>
+                09012270747
+              </a>
+            </div>
+          </div>
+
+          <p style={{ marginTop: "28px", textAlign: "center", color: "var(--text-secondary)", fontSize: "0.95rem", lineHeight: "1.7" }}>
+            We keep the shop responsive and mobile-friendly, so you can reach us from any device.
+          </p>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer>
         <div className="container">
