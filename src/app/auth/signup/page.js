@@ -81,7 +81,7 @@ export default function SignupPage() {
 
       <div className="auth-card">
         <div className="auth-brand">
-          <span className="auth-logo">PRG TRAP VAULT</span>
+          <span className="auth-logo">PRJ TRAP VAULT</span>
           <p className="auth-brand-sub">Create your account</p>
         </div>
 

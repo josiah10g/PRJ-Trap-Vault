@@ -31,7 +31,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata = {
-  title: "PRG TRAP VAULT | Monochromatic Streetwear Store",
+  title: "PRJ TRAP VAULT | Monochromatic Streetwear Store",
   description: "Exclusive premium streetwear collections. Shop our curated range of signature hoodies, oversized tees, and tactical cargo pants. Secure payment gateway in Naira via Paystack.",
   keywords: "streetwear, trap vault, clothing store, nigeria fashion, black and white clothing, hoodies, cargo pants",
 };
@@ -48,8 +48,8 @@ export default function RootLayout({ children }) {
       <body className="min-h-full flex flex-col">
         {children}
         {/* Inject Paystack Inline Popup script */}
-        <Script 
-          src="https://js.paystack.co/v1/inline.js" 
+        <Script
+          src="https://js.paystack.co/v1/inline.js"
           strategy="beforeInteractive"
         />
       </body>

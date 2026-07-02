@@ -48,7 +48,7 @@ export default function LoginPage() {
       <div className="auth-card">
         {/* Brand */}
         <div className="auth-brand">
-          <span className="auth-logo">PRG TRAP VAULT</span>
+          <span className="auth-logo">PRJ TRAP VAULT</span>
           <p className="auth-brand-sub">Sign in to your account</p>
         </div>
 

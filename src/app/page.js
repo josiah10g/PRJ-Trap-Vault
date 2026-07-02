@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import Image from "next/image";
+import React, { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 // Pre-defined catalog mapped to reference images
@@ -15,7 +16,7 @@ const PRODUCTS = [
   },
   {
     id: "p2",
-    name: "PRG Premium Oversized Tee",
+    name: "PRJ Premium Oversized Tee",
     category: "tees",
     price: 15000,
     image: "/images/IMG-20260701-WA0040.jpg",
@@ -39,7 +40,7 @@ const PRODUCTS = [
   },
   {
     id: "p5",
-    name: "PRG Heavyweight Fleece Hoodie",
+    name: "PRJ Heavyweight Fleece Hoodie",
     category: "hoodies",
     price: 38000,
     image: "/images/IMG-20260701-WA0043.jpg",
@@ -73,7 +74,6 @@ const PRODUCTS = [
 
 export default function Home() {
   // Client-side states
-  const [products, setProducts] = useState(PRODUCTS);
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [cart, setCart] = useState([]);
@@ -83,6 +83,21 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutMsg, setCheckoutMsg] = useState("");
+
+  const products = useMemo(() => {
+    let filtered = PRODUCTS;
+    if (activeCategory !== "all") {
+      filtered = filtered.filter((p) => p.category === activeCategory);
+    }
+    if (searchQuery.trim() !== "") {
+      filtered = filtered.filter(
+        (p) =>
+          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    return filtered;
+  }, [activeCategory, searchQuery]);
 
   // Load Supabase session on mount
   useEffect(() => {
@@ -102,12 +117,13 @@ export default function Home() {
     setUser(null);
   };
 
-  // Load cart from localStorage
+  // Load cart from localStorage after hydration
   useEffect(() => {
     const savedCart = localStorage.getItem("trap_vault_cart");
     if (savedCart) {
       try {
-        setCart(JSON.parse(savedCart));
+        const parsed = JSON.parse(savedCart);
+        requestAnimationFrame(() => setCart(parsed));
       } catch (e) {
         console.error("Error loading cart", e);
       }
@@ -127,8 +143,8 @@ export default function Home() {
       filtered = filtered.filter(p => p.category === activeCategory);
     }
     if (searchQuery.trim() !== "") {
-      filtered = filtered.filter(p => 
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      filtered = filtered.filter(p =>
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.description.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
@@ -148,7 +164,7 @@ export default function Home() {
     } else {
       saveCart([...cart, { ...product, size, quantity: 1 }]);
     }
-    
+
     // Close detail modal, open cart drawer
     setSelectedProduct(null);
     setIsCartOpen(true);
@@ -183,73 +199,9 @@ export default function Home() {
     }).format(amount);
   };
 
-  // Live Paystack checkout
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
     if (cart.length === 0) return;
-
-    const paystackKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY;
-    if (!paystackKey) {
-      alert("Paystack is not configured yet. Add NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY to your environment variables.");
-      return;
-    }
-
-    const email = user?.email;
-    if (!email) {
-      window.location.href = "/auth/login";
-      return;
-    }
-
-    const total = getSubtotal(); // in Naira
-
-    setCheckoutLoading(true);
-    setCheckoutMsg("");
-
-    const handler = window.PaystackPop.setup({
-      key: paystackKey,
-      email,
-      amount: total * 100, // Paystack expects kobo
-      currency: "NGN",
-      ref: `PRG-${Date.now()}-${Math.floor(Math.random() * 1000000)}`,
-      metadata: {
-        custom_fields: [
-          { display_name: "Store", variable_name: "store", value: "PRG TRAP VAULT" },
-        ],
-      },
-      onClose: () => {
-        setCheckoutLoading(false);
-        setCheckoutMsg("Payment cancelled.");
-      },
-      callback: async (response) => {
-        // Server-side verification
-        try {
-          const res = await fetch("/api/verify-payment", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              reference: response.reference,
-              cartItems: cart,
-              userEmail: email,
-            }),
-          });
-          const data = await res.json();
-          if (data.success) {
-            saveCart([]);
-            setIsCartOpen(false);
-            setCheckoutMsg("");
-            setCheckoutLoading(false);
-            alert(`✅ Order confirmed! Payment of ${formatNaira(data.amount)} received. Check your email for details.`);
-          } else {
-            setCheckoutLoading(false);
-            setCheckoutMsg(`Payment error: ${data.error}`);
-          }
-        } catch {
-          setCheckoutLoading(false);
-          setCheckoutMsg("Could not verify payment. Please contact support.");
-        }
-      },
-    });
-
-    handler.openIframe();
+    setCheckoutMsg("Checkout is temporarily disabled. We'll enable payment later.");
   };
 
   return (
@@ -258,9 +210,9 @@ export default function Home() {
       <header>
         <div className="container header-container">
           <a href="#" className="logo">
-            PRG TRAP VAULT <span>NG</span>
+            PRJ TRAP VAULT <span>NG</span>
           </a>
-          
+
           <nav>
             <ul>
               <li><a href="#" className="active">Store</a></li>
@@ -289,10 +241,10 @@ export default function Home() {
                 Sign In
               </a>
             )}
-            
+
             {/* Cart Trigger */}
-            <button 
-              className="action-btn" 
+            <button
+              className="action-btn"
               onClick={() => setIsCartOpen(true)}
               aria-label="Open Shopping Cart"
             >
@@ -312,8 +264,8 @@ export default function Home() {
       </header>
 
       {/* Hero Banner */}
-      <section 
-        className="hero" 
+      <section
+        className="hero"
         style={{ backgroundImage: "url('/images/IMG-20260701-WA0039.jpg')" }}
       >
         <div className="hero-overlay"></div>
@@ -336,7 +288,7 @@ export default function Home() {
             <ul className="category-list">
               {["all", "hoodies", "tees", "bottoms", "outerwear"].map(cat => (
                 <li key={cat}>
-                  <button 
+                  <button
                     className={`category-tab ${activeCategory === cat ? "active" : ""}`}
                     onClick={() => setActiveCategory(cat)}
                   >
@@ -353,9 +305,9 @@ export default function Home() {
                   <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
               </span>
-              <input 
-                type="text" 
-                placeholder="Search vault..." 
+              <input
+                type="text"
+                placeholder="Search vault..."
                 className="search-input"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -374,8 +326,8 @@ export default function Home() {
         ) : (
           <div className="product-grid">
             {products.map(prod => (
-              <div 
-                key={prod.id} 
+              <div
+                key={prod.id}
                 className="product-card"
                 onClick={() => {
                   setSelectedProduct(prod);
@@ -383,9 +335,11 @@ export default function Home() {
                 }}
               >
                 <div className="product-image-container">
-                  <img 
-                    src={prod.image} 
-                    alt={prod.name} 
+                  <Image
+                    src={prod.image}
+                    alt={prod.name}
+                    width={420}
+                    height={420}
                     className="product-image"
                   />
                   <div className="quick-add-overlay">
@@ -424,7 +378,7 @@ export default function Home() {
           ) : (
             cart.map((item, idx) => (
               <div key={`${item.id}-${item.size}-${idx}`} className="cart-item">
-                <img src={item.image} alt={item.name} className="cart-item-image" />
+                <Image src={item.image} alt={item.name} width={80} height={80} className="cart-item-image" />
                 <div className="cart-item-info">
                   <h4 className="cart-item-title">{item.name}</h4>
                   <p className="cart-item-meta font-mono">SIZE: {item.size}</p>
@@ -465,17 +419,9 @@ export default function Home() {
             <button
               className="btn btn-primary checkout-btn"
               onClick={handleCheckout}
-              disabled={checkoutLoading}
-              style={{ opacity: checkoutLoading ? 0.7 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}
             >
-              {checkoutLoading ? (
-                <>
-                  <span className="auth-spinner" style={{ borderTopColor: "#000" }} />
-                  Processing…
-                </>
-              ) : (
-                "Proceed to Payment"
-              )}
+              Checkout Coming Soon
             </button>
           </div>
         )}
@@ -492,30 +438,32 @@ export default function Home() {
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
           </button>
-          
+
           {selectedProduct && (
             <div className="detail-grid">
               <div className="detail-image-wrapper">
-                <img 
-                  src={selectedProduct.image} 
-                  alt={selectedProduct.name} 
+                <Image
+                  src={selectedProduct.image}
+                  alt={selectedProduct.name}
+                  width={520}
+                  height={520}
                   className="detail-image"
                 />
               </div>
-              
+
               <div className="detail-info">
                 <span className="detail-tag font-mono">{selectedProduct.category}</span>
                 <h2 className="detail-title">{selectedProduct.name}</h2>
                 <div className="detail-price font-mono">{formatNaira(selectedProduct.price)}</div>
-                
+
                 <p className="detail-desc">{selectedProduct.description}</p>
-                
+
                 <div className="size-section">
                   <h4 className="size-section-title">Select Size</h4>
                   <div className="size-grid">
                     {["S", "M", "L", "XL"].map(sz => (
-                      <button 
-                        key={sz} 
+                      <button
+                        key={sz}
                         className={`size-option ${selectedSize === sz ? "active" : ""}`}
                         onClick={() => setSelectedSize(sz)}
                       >
@@ -525,7 +473,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                <button 
+                <button
                   className="btn btn-primary"
                   onClick={() => addToCart(selectedProduct, selectedSize)}
                   style={{ width: "100%" }}
@@ -541,9 +489,9 @@ export default function Home() {
       {/* Mini About Section */}
       <section id="about" style={{ padding: "80px 0", borderTop: "1px solid var(--border-color)", backgroundColor: "var(--bg-secondary)" }}>
         <div className="container" style={{ maxWidth: "800px", textAlignment: "center", margin: "0 auto" }}>
-          <h2 style={{ fontSize: "2rem", marginBottom: "24px" }}>PRG TRAP VAULT Brand Philosophy</h2>
+          <h2 style={{ fontSize: "2rem", marginBottom: "24px" }}>PRJ TRAP VAULT Brand Philosophy</h2>
           <p style={{ color: "var(--text-secondary)", lineHeight: "1.8", fontSize: "1.05rem" }}>
-            Born from a desire to escape normal styling choices, PRG TRAP VAULT focuses on clean monochromatic contrasts. We avoid high color saturations in favor of deep structural patterns and premium heavy garments. Each piece is engineered in limited quantities to guarantee absolute distinction.
+            Born from a desire to escape normal styling choices, PRJ TRAP VAULT focuses on clean monochromatic contrasts. We avoid high color saturations in favor of deep structural patterns and premium heavy garments. Each piece is engineered in limited quantities to guarantee absolute distinction.
           </p>
         </div>
       </section>
@@ -553,10 +501,10 @@ export default function Home() {
         <div className="container">
           <div className="footer-grid">
             <div className="footer-brand">
-              <a href="#" className="logo">PRG TRAP VAULT</a>
+              <a href="#" className="logo">PRJ TRAP VAULT</a>
               <p className="footer-tagline">Premium streetwear designed with raw structures and clean black-and-white silhouettes.</p>
             </div>
-            
+
             <div className="footer-links">
               <h4>Explore</h4>
               <ul>
@@ -588,15 +536,9 @@ export default function Home() {
           </div>
 
           <div className="footer-bottom">
-            <p className="copyright">&copy; 2026 PRG TRAP VAULT. All rights reserved.</p>
+            <p className="copyright">&copy; 2026 PRJ TRAP VAULT. All rights reserved.</p>
             <div className="payment-methods">
-              <span>PAYSTACK SECURE Checkout</span>
-              <span>&bull;</span>
-              <span>CARDS</span>
-              <span>&bull;</span>
-              <span>TRANSFERS</span>
-              <span>&bull;</span>
-              <span>USSD</span>
+              <span>Checkout disabled for now</span>
             </div>
           </div>
         </div>
