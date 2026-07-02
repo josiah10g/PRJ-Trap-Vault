@@ -136,21 +136,6 @@ export default function Home() {
     localStorage.setItem("trap_vault_cart", JSON.stringify(newCart));
   };
 
-  // Filter products based on search and category
-  useEffect(() => {
-    let filtered = PRODUCTS;
-    if (activeCategory !== "all") {
-      filtered = filtered.filter(p => p.category === activeCategory);
-    }
-    if (searchQuery.trim() !== "") {
-      filtered = filtered.filter(p =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.description.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    setProducts(filtered);
-  }, [activeCategory, searchQuery]);
-
   // Cart Handlers
   const addToCart = (product, size) => {
     const existingIndex = cart.findIndex(
@@ -208,9 +193,15 @@ export default function Home() {
     <>
       {/* Sticky Monochromatic Header */}
       <header>
-        <div className="container header-container">
-          <a href="#" className="logo">
-            PRJ TRAP VAULT <span>NG</span>
+        <div className="container header-container" style={{ alignItems: "center" }}>
+          <a href="#" className="logo" style={{ display: "flex", alignItems: "center" }}>
+            <Image
+              src="/prj-logo.jpg"
+              alt="PRJ Trap Vault logo"
+              width={48}
+              height={48}
+              style={{ objectFit: "contain" }}
+            />
           </a>
 
           <nav>
