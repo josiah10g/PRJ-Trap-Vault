@@ -4,24 +4,44 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { useToast } from "@/app/context/ToastContext";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const { showToast } = useToast();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
 
     const supabase = createClient();
     if (!supabase) {
-      setError("Authentication is not configured yet.");
+      showToast(
+        "Authentication is not configured. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY with valid Supabase values.",
+        "error"
+      );
       setLoading(false);
       return;
+    }
+
+    // Check if account/profile exists in profiles table
+    try {
+      const { data: profileCheck, error: checkError } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("email", email)
+        .maybeSingle();
+
+      if (!profileCheck && !checkError) {
+        showToast("Account doesn't exist. Please create an account.", "error");
+        setLoading(false);
+        return;
+      }
+    } catch (err) {
+      console.warn("Skipping account existence check:", err);
     }
 
     const { error: authError } = await supabase.auth.signInWithPassword({
@@ -30,11 +50,14 @@ export default function LoginPage() {
     });
 
     if (authError) {
-      setError(authError.message);
+      showToast(authError.message || "Invalid login credentials.");
       setLoading(false);
     } else {
-      router.push("/");
-      router.refresh();
+      showToast("Login successful. Redirecting...", "success");
+      setTimeout(() => {
+        router.push("/");
+        router.refresh();
+      }, 2500);
     }
   };
 
@@ -86,15 +109,6 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-
-          {error && (
-            <div className="auth-error" role="alert">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
-              </svg>
-              {error}
-            </div>
-          )}
 
           <button
             id="login-submit-btn"

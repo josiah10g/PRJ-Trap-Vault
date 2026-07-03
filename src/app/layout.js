@@ -1,6 +1,8 @@
 import { Syne, Space_Grotesk, Space_Mono, Plus_Jakarta_Sans, Orbitron } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
+import { ToastProvider } from "./context/ToastContext";
+import Header from "./components/Header";
 
 const syne = Syne({
   variable: "--font-syne",
@@ -59,7 +61,10 @@ export default function RootLayout({ children }) {
         <link rel="shortcut icon" href="/prj-logo.jpg" />
       </head>
       <body className="min-h-full flex flex-col">
-        {children}
+        <ToastProvider>
+          <Header />
+          {children}
+        </ToastProvider>
         {/* Inject Paystack Inline Popup script */}
         <Script
           src="https://js.paystack.co/v1/inline.js"
